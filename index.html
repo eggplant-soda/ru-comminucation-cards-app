@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#7862a5" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="default" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="карточки" name="apple-mobile-web-app-title"/>
+<link href="manifest.webmanifest" rel="manifest"/>
+<link href="icon-192.png" rel="apple-touch-icon"/>
+<title>коммуникационные карточки</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<main class="app">
+<div class="top">
+<div><div class="title">карточки</div><div class="sub">на случай, когда слов мало</div></div>
+<button aria-label="сменить тему" class="icon-btn" id="themeQuick">◐</button>
+</div>
+<button class="quick-btn" id="quickOpen">мне тяжело</button>
+<div aria-label="быстрые ответы" class="answer-row">
+<button class="answer-btn" data-answer="да">да</button>
+<button class="answer-btn" data-answer="нет">нет</button>
+<button class="answer-btn" data-answer="не знаю">не знаю</button>
+</div>
+<section class="view active" id="view-my">
+<div class="view-head"><h2>мои карточки</h2><button class="soft-btn" id="newCardTop">＋ создать</button></div>
+<div class="hint">добавляй сюда готовые карточки из наборов или создавай свои. ★ — избранное, ⚡ — быстрый доступ через «мне тяжело».</div>
+<div class="chips" id="myChips"></div>
+<div class="grid" id="myGrid"></div>
+</section>
+<section class="view" id="view-sets">
+<div class="view-head"><h2>наборы</h2><button class="soft-btn" id="saveMySet">＋ из моих</button></div>
+<div class="hint">готовые, импортированные и собственные наборы. можно добавить весь набор или только отдельные карточки.</div>
+<input class="search" id="setsSearch" placeholder="поиск наборов"/>
+<div class="set-list" id="setsList"></div>
+<div class="set-preview" hidden="" id="setPreview">
+<div class="set-preview-head"><div><h3 id="setPreviewName"></h3><div class="set-meta" id="setPreviewMeta"></div></div><button class="soft-btn primary" id="addWholeSet">добавить весь</button></div>
+<div class="set-actions" id="setManageActions">
+<button class="soft-btn" id="setNewCard">＋ новая карточка</button>
+<button class="soft-btn" id="setEditMeta">редактировать набор</button>
+<button class="soft-btn" id="setCopyEditable">сделать редактируемую копию</button>
+<button class="danger-btn" id="setDelete">удалить набор</button>
+</div>
+<div class="hint" id="setPreviewDesc"></div>
+<input class="search" id="setSearch" placeholder="поиск карточки в наборе"/>
+<div class="chips" id="setChips"></div>
+<div class="grid" id="setGrid"></div>
+</div>
+<div class="settings-group" style="margin-top:16px">
+<h3>добавить чужой набор</h3>
+<div class="set-actions"><button class="soft-btn" id="importSetFileBtn">импортировать файл</button><button class="soft-btn" id="importSetCodeBtn">вставить код набора</button></div>
+<input accept=".json,.ccset.json,application/json" hidden="" id="setFile" type="file"/>
+</div>
+</section>
+<section class="view" id="view-create">
+<div class="view-head"><h2 id="editorTitle">новая карточка</h2></div>
+<form class="form" id="cardForm">
+<div><div class="label">тип карточки</div><div class="type-switch"><button class="type-btn active" data-type="plain" type="button">обычная</button><button class="type-btn" data-type="choice" type="button">с вариантами</button></div></div>
+<div id="plainFields">
+<div class="label">крупная фраза</div><input class="field" id="fShort" placeholder="например: мне нужна пауза"/>
+</div>
+<div hidden="" id="choiceFields">
+<div class="label">фраза до выбора</div><input class="field" id="fPrefix" placeholder="например: здесь слишком"/>
+<div style="margin-top:10px">
+  <div class="label">варианты — каждый с новой строки</div>
+
+  <textarea
+    class="field textarea"
+    id="fOptions"
+    placeholder="шумно&#10;ярко&#10;много людей"
+  ></textarea>
+
+  <div class="muted" style="margin-top:6px">
+    например: напиши «шумно», нажми перенос строки, затем «ярко»
+  </div>
+</div>
+<div style="margin-top:10px"><div class="label">фраза после выбора</div><input class="field" id="fSuffix" placeholder="необязательно, например: , пожалуйста"/></div>
+<label class="checkrow"><input id="fMulti" type="checkbox"/><span><b>разрешить несколько вариантов через +</b><br/><span class="muted">например: шумно + ярко</span></span></label>
+<label class="checkrow"><input id="fOther" type="checkbox"/><span><b>разрешить «другое»</b><br/><span class="muted">пользователь сможет быстро вписать свой вариант</span></span></label>
+</div>
+<div><div class="label">пояснение / дополнительный текст</div><textarea class="field textarea" id="fLong" placeholder="необязательно"></textarea></div>
+<div>
+<div class="label">раздел</div>
+<select class="field" id="fCategorySelect"></select>
+<div class="category-new" hidden="" id="newCategoryWrap"><input class="field" id="fCategoryNew" placeholder="название нового раздела"/></div>
+</div>
+<details class="advanced" id="advancedOptions">
+<summary>дополнительно</summary>
+<div class="advanced-body">
+<div class="row2">
+<label class="checkrow"><input id="fStar" type="checkbox"/><span><b>★ избранное</b><br/><span class="muted">быстро находить в «моих»</span></span></label>
+<label class="checkrow"><input id="fQuick" type="checkbox"/><span><b>⚡ быстрый доступ</b><br/><span class="muted">показывать через «мне тяжело»</span></span></label>
+</div>
+<label class="checkrow"><input id="fEmergency" type="checkbox"/><span><b>экстренный контакт</b><br/><span class="muted">добавить кнопку, которая по твоему нажатию покажет сохранённый номер</span></span></label>
+</div>
+</details>
+<div class="preview"><div class="label">предпросмотр</div><div class="preview-big" id="editorPreviewText">карточка</div><div class="preview-options" id="editorPreviewOptions"></div></div>
+<button class="primary-btn" type="submit">сохранить карточку</button>
+<button class="danger-btn" hidden="" id="deleteCard" type="button">удалить карточку</button>
+</form>
+</section>
+<section class="view" id="view-settings">
+<div class="view-head"><h2>настройки</h2></div>
+<div class="settings-group"><h3>вид</h3>
+<div class="setting"><div class="label">тема</div><select class="field" id="themeSelect"><option value="system">как в системе</option><option value="light">светлая</option><option value="dark">тёмная</option></select></div>
+<div class="setting"><div class="label">шрифт</div><select class="field" id="fontSelect"><option value="system">системный</option><option value="arial">arial</option><option value="verdana">verdana</option><option value="dyslexic">opendyslexic / verdana</option><option value="serif">с засечками</option><option value="mono">моноширинный</option></select></div>
+<div class="setting"><div class="label">местоимения / форма встроенных карточек</div><select class="field" id="genderSelect"><option value="male">он / его</option><option value="female">она / её</option><option value="they">они / их</option><option value="it">оно / его</option><option value="neutral">без рода</option></select><div class="muted" style="margin-top:6px">меняет только готовые фразы, где в русском языке нужен род. для «они» используются формы множественного числа, например «сделали». у карточек, сделанных тобой, местоимения не меняются.</div></div>
+<div class="setting"><div class="range-row"><div class="label">размер текста</div><b id="fontScaleValue">100%</b></div><input id="fontScale" max="145" min="90" step="5" type="range" value="100"/></div>
+<label class="checkrow"><input id="highContrast" type="checkbox"/><span>высокий контраст</span></label>
+<div class="setting"><div class="label">акцент</div><div class="swatches" id="swatches"></div></div>
+</div>
+<div class="settings-group"><h3>профиль</h3>
+<div class="setting"><div class="label">имя</div><input class="field" id="profileName" placeholder="например: сода"/></div>
+<div class="setting"><div class="label">обращение к собеседнику</div><select class="field" id="addressSelect"><option value="informal">на ты</option><option value="formal">на вы</option></select><div class="muted" style="margin-top:6px">меняет готовые фразы с прямым обращением: «привет / здравствуйте», «скажи / скажите», «тебя / вас» и другие.</div></div>
+</div>
+<div class="settings-group"><h3>экстренный контакт</h3>
+<div class="setting"><div class="label">имя контакта</div><input class="field" id="contactName" placeholder="например: алекс"/></div>
+<div class="setting"><div class="label">номер телефона</div><input class="field" id="contactPhone" inputmode="tel" placeholder="например: +7 900 000-00-00" type="tel"/></div>
+<div class="muted">номер не показывается автоматически. на карточках помощи появится кнопка «показать контакт», и только ты решаешь, раскрывать его или нет.</div>
+</div>
+<div class="settings-group"><h3>озвучивание (tts)</h3>
+<label class="checkrow"><input id="ttsLong" type="checkbox"/><span>озвучивать также пояснение</span></label>
+<div class="setting"><div class="range-row"><div class="label">скорость</div><b id="ttsRateValue">1.0×</b></div><input id="ttsRate" max="1.4" min="0.6" step="0.1" type="range" value="1"/></div>
+</div>
+<div class="settings-group"><h3>резервная копия</h3>
+<div class="muted">карточки, наборы, настройки и экстренный контакт сохраняются автоматически на этом устройстве. для защиты от очистки данных браузера можно скачать резервную копию.</div>
+<div class="setting"><div class="label">локальное сохранение</div><div class="muted" id="storageStatus">автосохранение включено</div></div>
+<div class="set-actions"><button class="soft-btn" id="exportBtn">скачать резервную копию</button><button class="soft-btn" id="importBtn">восстановить из файла</button><button class="soft-btn" id="persistBtn">защитить локальное хранилище</button><button class="soft-btn" id="restoreLocalBtn">восстановить локальный снимок</button></div>
+<input accept="application/json,.json" hidden="" id="importFile" type="file"/>
+</div>
+</section>
+</main>
+<nav class="nav" id="nav">
+<button class="active" data-view="my"><span>▦</span>мои</button>
+<button data-view="sets"><span>▤</span>наборы</button>
+<button data-view="create"><span>＋</span>создать</button>
+<button data-view="settings"><span>⚙</span>настройки</button>
+</nav>
+<div aria-hidden="true" class="overlay" id="cardOverlay">
+<section class="sheet">
+<div class="sheet-head"><button class="soft-btn" id="closeCard">← назад</button><div><button class="icon-btn" id="starCard" title="избранное">☆</button></div></div>
+<div class="display">
+<div class="display-short" id="displayShort"></div>
+<div class="choice-area" id="choiceArea"><div class="choice-options" id="choiceOptions"></div><div class="choice-help" id="choiceHelp"></div></div>
+<div class="display-long" id="displayLong"></div>
+<div class="contact-panel" hidden="" id="contactPanel"><div class="contact-label">экстренный контакт</div><div class="contact-name" id="contactDisplayName"></div><div class="contact-phone" id="contactDisplayPhone"></div></div>
+</div>
+<div class="sheet-actions"><button id="toggleDetails">подробнее</button><button id="speakCard">🔊 озвучить</button><button id="copyCard">копировать</button><button id="shareCard">поделиться</button></div>
+<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="soft-btn" id="editCard">редактировать</button><button class="primary-btn" hidden="" id="showContact">показать экстренный контакт</button></div>
+</section>
+</div>
+<div aria-hidden="true" class="overlay" id="quickOverlay"><section class="sheet"><div class="sheet-head"><button class="soft-btn" id="closeQuick">← назад</button><strong>быстрый доступ</strong></div><div class="quick-grid" id="quickGrid"></div></section></div>
+<div class="toast" id="toast"></div>
+<script src="cards-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
