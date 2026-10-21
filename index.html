@@ -125,10 +125,18 @@
 <div class="setting"><div class="range-row"><div class="label">скорость</div><b id="ttsRateValue">1.0×</b></div><input id="ttsRate" max="1.4" min="0.6" step="0.1" type="range" value="1"/></div>
 </div>
 <div class="settings-group"><h3>резервная копия</h3>
-<div class="muted">карточки, наборы, настройки и экстренный контакт сохраняются автоматически на этом устройстве. для защиты от очистки данных браузера можно скачать резервную копию.</div>
+<div class="muted">карточки, наборы и настройки сохраняются только на этом устройстве. резервная копия может содержать личные данные, включая имя и экстренный контакт, если они были заполнены.</div>
 <div class="setting"><div class="label">локальное сохранение</div><div class="muted" id="storageStatus">автосохранение включено</div></div>
 <div class="set-actions"><button class="soft-btn" id="exportBtn">скачать резервную копию</button><button class="soft-btn" id="importBtn">восстановить из файла</button><button class="soft-btn" id="persistBtn">защитить локальное хранилище</button><button class="soft-btn" id="restoreLocalBtn">восстановить локальный снимок</button></div>
 <input accept="application/json,.json" hidden="" id="importFile" type="file"/>
+</div>
+<div class="settings-group">
+<h3>данные приложения</h3>
+<div class="muted">данные хранятся только на этом устройстве. можно отдельно сбросить настройки или полностью удалить карточки, наборы, настройки и локальные резервные копии.</div>
+<div class="set-actions">
+<button class="soft-btn" id="resetSettingsBtn" type="button">сбросить настройки</button>
+<button class="danger-btn" id="deleteAllDataBtn" type="button">удалить все мои данные</button>
+</div>
 </div>
 </section>
 </main>

@@ -183,6 +183,34 @@ function restoreLocalSnapshot(){
    var d=rec.data;state.cards=Array.isArray(d.cards)?d.cards.map(normalizeCard):[];state.savedSets=Array.isArray(d.savedSets)?d.savedSets.map(normalizeSet):[];state.settings=Object.assign({},DEFAULT_SETTINGS,d.settings||{});save();applySettings();renderMy();renderSets();syncSettings();refreshCategoryOptions('');updateEditorPreview();updateStorageStatus();toast('локальный снимок восстановлен');
  }).catch(function(){toast('не получилось восстановить локальный снимок')});
 }
+function resetSettings(){
+ if(!confirm('сбросить все настройки? карточки и наборы останутся.'))return;
+ state.settings=Object.assign({},DEFAULT_SETTINGS);
+ save();applySettings();syncSettings();renderMy();renderSets();updateEditorPreview();updateStorageStatus();
+ toast('настройки сброшены');
+}
+function deleteAllUserData(){
+ if(!confirm('удалить все карточки, наборы, настройки и локальные резервные копии? это нельзя отменить.'))return;
+ if(!confirm('точно удалить все данные этого приложения с устройства?'))return;
+ clearTimeout(backupTimer);
+ var keys=[];
+ for(var i=0;i<localStorage.length;i++){var key=localStorage.key(i);if(key&&key.indexOf('communication_cards_')===0)keys.push(key)}
+ keys.forEach(function(key){localStorage.removeItem(key)});
+ function reload(){setTimeout(function(){location.reload()},50)}
+ if(!('indexedDB' in window)){reload();return}
+ var dbNames=['communication_cards_v4_backup','communication_cards_v5_backup','communication_cards_v6_backup','communication_cards_v7_backup','communication_cards_v8_backup','communication_cards_v9_backup'];
+ function removeDatabases(){
+   var left=dbNames.length;if(!left){reload();return}
+   dbNames.forEach(function(name){
+     try{
+       var req=indexedDB.deleteDatabase(name),done=false;
+       var finish=function(){if(done)return;done=true;left--;if(left<=0)reload()};
+       req.onsuccess=finish;req.onerror=finish;req.onblocked=finish;setTimeout(finish,500);
+     }catch(e){left--;if(left<=0)reload()}
+   });
+ }
+ if(backupDbPromise){backupDbPromise.then(function(db){try{db.close()}catch(e){}backupDbPromise=null;removeDatabases()}).catch(removeDatabases)}else removeDatabases();
+}
 function syncSettings(){var s=state.settings;$('themeSelect').value=s.theme;$('fontSelect').value=s.font;$('genderSelect').value=s.gender||'male';$('addressSelect').value=s.address||'informal';$('profileName').value=s.profileName||'';$('contactName').value=s.contactName||'';$('contactPhone').value=s.contactPhone||'';$('fontScale').value=s.scale;$('fontScaleValue').textContent=s.scale+'%';$('highContrast').checked=!!s.contrast;$('ttsLong').checked=!!s.ttsLong;$('ttsRate').value=s.ttsRate;$('ttsRateValue').textContent=Number(s.ttsRate).toFixed(1)+'×';renderSwatches()}
 function renderSwatches(){var box=$('swatches');box.innerHTML='';ACCENTS.forEach(function(c){var b=document.createElement('button');b.className='swatch';b.style.background=c;b.title=c;if(c===state.settings.accent)b.style.outline='3px solid '+c;b.onclick=function(){state.settings.accent=c;save();applySettings();renderSwatches()};box.appendChild(b)})}
 function bindSetting(id,key,transform){$(id).addEventListener('input',function(){state.settings[key]=transform?transform(this):this.value;save();applySettings();if(id==='fontScale')$('fontScaleValue').textContent=state.settings.scale+'%';if(id==='ttsRate')$('ttsRateValue').textContent=Number(state.settings.ttsRate).toFixed(1)+'×'})}
@@ -196,7 +224,7 @@ $('closeCard').onclick=closeCard;$('showContact').onclick=function(){var phone=S
 $('quickOpen').onclick=openQuick;$('closeQuick').onclick=function(){$('quickOverlay').classList.remove('show')};document.querySelectorAll('.answer-btn').forEach(function(b){b.onclick=function(){openStandalone(b.getAttribute('data-answer'))}});
 $('saveMySet').onclick=makeSetFromMine;$('setsSearch').oninput=renderSets;$('importSetFileBtn').onclick=function(){$('setFile').click()};$('setFile').onchange=function(){if(this.files&&this.files[0])importSetFile(this.files[0]);this.value=''};$('importSetCodeBtn').onclick=importSetCode;$('addWholeSet').onclick=function(){var s=findSet(state.activeSetId);if(s)addWholeSetToMine(s)};$('setNewCard').onclick=function(){if(state.activeSetId&&isSavedSet(state.activeSetId))startNewSetCard(state.activeSetId)};$('setEditMeta').onclick=function(){if(state.activeSetId)editSetMeta(state.activeSetId)};$('setDelete').onclick=function(){if(state.activeSetId)deleteSet(state.activeSetId)};$('setCopyEditable').onclick=function(){var s=findSet(state.activeSetId);if(s)copySetEditable(s)};$('setSearch').oninput=function(){var s=findSet(state.activeSetId);if(s)renderSetCards(s)};
 $('themeQuick').onclick=function(){state.settings.theme=(themeActual()==='dark')?'light':'dark';save();applySettings();syncSettings()};bindSetting('themeSelect','theme');bindSetting('fontSelect','font');$('profileName').addEventListener('input',function(){state.settings.profileName=this.value;save();renderMy();renderSets();if(state.currentCard&&$('cardOverlay').classList.contains('show'))fillOverlay(state.currentCard)});$('addressSelect').addEventListener('input',function(){state.settings.address=this.value;save();renderMy();renderSets();if(state.currentCard&&$('cardOverlay').classList.contains('show'))fillOverlay(state.currentCard);updateEditorPreview()});$('contactName').addEventListener('input',function(){state.settings.contactName=this.value;save()});$('contactPhone').addEventListener('input',function(){state.settings.contactPhone=this.value;save();if(state.currentCard&&$('cardOverlay').classList.contains('show'))fillOverlay(state.currentCard)});$('genderSelect').addEventListener('input',function(){state.settings.gender=this.value;save();renderMy();renderSets();if(state.currentCard&&$('cardOverlay').classList.contains('show'))fillOverlay(state.currentCard);updateEditorPreview()});bindSetting('fontScale','scale',function(el){return Number(el.value)});bindSetting('ttsRate','ttsRate',function(el){return Number(el.value)});$('highContrast').onchange=function(){state.settings.contrast=this.checked;save();applySettings()};$('ttsLong').onchange=function(){state.settings.ttsLong=this.checked;save()};
-$('exportBtn').onclick=exportData;$('importBtn').onclick=function(){$('importFile').click()};$('persistBtn').onclick=requestPersistentStorage;$('restoreLocalBtn').onclick=restoreLocalSnapshot;$('importFile').onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value=''};
+$('exportBtn').onclick=exportData;$('importBtn').onclick=function(){$('importFile').click()};$('persistBtn').onclick=requestPersistentStorage;$('restoreLocalBtn').onclick=restoreLocalSnapshot;$('importFile').onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value=''};$('resetSettingsBtn').onclick=resetSettings;$('deleteAllDataBtn').onclick=deleteAllUserData;
 window.addEventListener('keydown',function(e){if(e.key==='Escape'){closeCard();$('quickOverlay').classList.remove('show')}});if(window.matchMedia){var mq=window.matchMedia('(prefers-color-scheme: dark)');if(mq.addEventListener)mq.addEventListener('change',function(){if(state.settings.theme==='system')applySettings()})}
 applySettings();renderMy();renderSets();syncSettings();refreshCategoryOptions('');updateEditorPreview();updateStorageStatus();if(stored)save();restoreIndexedBackupIfNeeded().then(function(restored){if(restored){applySettings();renderMy();renderSets();syncSettings();refreshCategoryOptions('');updateEditorPreview();updateStorageStatus();toast('данные восстановлены из локальной копии')}});if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().then(function(){updateStorageStatus()}).catch(function(){})}if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){})}
 })();
